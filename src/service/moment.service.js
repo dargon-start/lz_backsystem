@@ -12,12 +12,13 @@ class moment {
   async getMoment(momentId) {
     // const statement = `SELECT m.id momentId ,m.content content , m.creatat createTime,m.updateat updateTime,JSON_OBJECT('id',u.id,'name',u.name) author FROM moment m LEFT JOIN users u on m.user_id=u.id WHERE m.id=?;`;
     //同时获取该动态的评论信息
+    const path = `${config.APP_HOST}:${config.APP_PORT}/moment/images/`;
     const statement = `
     SELECT 
       m.id momentId ,m.content content , m.creatat createTime,m.updateat updateTime,JSON_OBJECT("id",u.id,"name",u.name,'avatar',u.avatar_url) user ,
       IF(COUNT(c.id),JSON_ARRAYAGG(JSON_OBJECT('id',c.id,'content',c.content,'user',JSON_OBJECT('id',cu.id,'name',cu.name,"avatar",cu.avatar_url),'commentId',c.comment_id)),NULL) clist,
       (SELECT IF(COUNT(l.id),JSON_ARRAYAGG(JSON_OBJECT('id',l.id,'name',l.name)),NULL)  FROM moment_label ml LEFT JOIN label l ON ml.label_id = l.id WHERE ml.moment_id = m.id) labelList,
-      (SELECT JSON_ARRAYAGG(CONCAT('http://localhost:8000/moment/images/',file.filename)) FROM file WHERE file.moment_id = m.id) imgs
+      (SELECT JSON_ARRAYAGG(CONCAT('${path}',file.filename)) FROM file WHERE file.moment_id = m.id) imgs
       FROM moment m LEFT JOIN users u ON m.user_id = u.id
       LEFT JOIN comment c ON c.moment_id= m.id 
       LEFT JOIN users cu ON cu.id = c.user_id 
@@ -28,7 +29,7 @@ class moment {
   }
 
   async getList(offset, size) {
-    const statement = `SELECT m.id momentId ,m.content content , m.creatat createTime,m.updateat updateTime,JSON_OBJECT("id",u.id,"name",u.name) user 
+    const statement = `SELECT m.id momentId ,m.content content , m.creatat createTime,m.updateat updateTime,JSON_OBJECT("id",u.id,"name",u.name,'avatar',u.avatar_url) user 
     ,(SELECT COUNT(*) FROM comment c WHERE c.moment_id = m.id ) commentCount,
     (SELECT COUNT(*) FROM moment_label ml WHERE ml.moment_id =m.id) labelCount
      FROM moment m LEFT JOIN users u on m.user_id=u.id LIMIT ? ,?;`;
